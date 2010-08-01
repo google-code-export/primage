@@ -81,5 +81,5 @@ if($controller) {
 	header('Location: ' . $_SERVER['REQUEST_URI']);
 }
 else {
-//	header("HTTP/1.0 404 Not Found");
+	header("HTTP/1.0 404 Not Found");
 }
