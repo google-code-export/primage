@@ -1,5 +1,8 @@
-RewriteEngine on
-Options +FollowSymLinks -Indexes -MultiViews
+Options -Indexes
 
+# CACHE FOR TWO HOURS
+Header set Cache-Control "max-age=7200, must-revalidate"
+
+RewriteEngine on
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule  ^/?([^?]+)?$  ../proxy.php [NC,QSA,L]

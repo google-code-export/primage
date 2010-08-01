@@ -5,7 +5,7 @@ class Primage {
 	protected $image;
 	protected $wdith;
 	protected $height;
-	protected static $supportedTypes = array(IMG_JPG => 'jpeg', IMG_PNG => 'png', IMG_GIF => 'gif');
+	protected static $supportedTypes = array('jpeg' => IMG_JPG, 'png' => IMG_PNG, 'gif' => IMG_GIF);
 
 	public function __construct($image) {
 		$this->initImage($image);
@@ -37,7 +37,7 @@ class Primage {
 		if($type == 'jpg') {
 			$type = 'jpeg';
 		}
-		if(!in_array($type, self::$supportedTypes)) {
+		if(!isset(self::$supportedTypes[$type])) {
 			throw new Exception('Unkown image type "' . $type . '"');
 		}
 		return $type;
@@ -128,13 +128,16 @@ class Primage {
 		return $this;
 	}
 
-	public function sendToStdout($typeConstant = IMG_JPG, $quality = 100, $pngFilters = PNG_NO_FILTER) {
-		if(!isset(self::$supportedTypes[$typeConstant])) {
-			throw new Exception('Unkown or unsupported type');
+	public function sendToStdout($type = 'jpeg', $quality = 100, $pngFilters = PNG_NO_FILTER) {
+		if($type == 'jpg') {
+			$type = 'jpeg';
 		}
-		header('Content-type: ' . image_type_to_mime_type($typeConstant));
+		if(!isset(self::$supportedTypes[$type])) {
+			throw new Exception('Unkown or unsupported type "' . $type . '"');
+		}
+		header('Content-type: ' . image_type_to_mime_type(self::$supportedTypes[$type]));
 		
-		$ok = call_user_func_array('image' . self::$supportedTypes[$typeConstant], array($this->image, null, $quality, $pngFilters));
+		$ok = call_user_func_array('image' . $type, array($this->image, null, $quality, $pngFilters));
 		if(!$ok) {
 			throw new Exception('Sending image to STDOUT failed');
 		}
