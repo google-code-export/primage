@@ -1,0 +1,5 @@
+RewriteEngine on
+Options +FollowSymLinks -Indexes -MultiViews
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule  ^/?([^?]+)?$  ../proxy.php [NC,QSA,L]
