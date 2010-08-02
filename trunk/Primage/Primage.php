@@ -102,6 +102,10 @@ class Primage {
 		return $this;
 	}
 
+	/**
+	 * @param string $effect (blur, edge, sharpena, sharpenb, emboss, light)
+	 * @return Primage
+	 */
 	public function addEffect($effect) {
 		$effects = array('blur' => array(array(1 / 9, 1 / 9, 1 / 9), array(1 / 9, 1 / 9, 1 / 9), array(1 / 9, 1 / 9, 1 / 9)), 'edge' => array(array(0, -1, 0), array(-1, 4, -1), array(0, -1, 0)), 'sharpena' => array(array(0, -1, 0), array(-1, 5, -1), array(0, -1, 0)), 'sharpenb' => array(array(-1, -1, -1), array(-1, 16, -1), array(-1, -1, -1)), 'emboss' => array(array(2, 0, 0), array(0, -1, 0), array(0, 0, -1)), 'light' => array(array(0, 0, 1), array(0, 1, 0), array(1, 0, 0)));
 		
