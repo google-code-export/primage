@@ -1,18 +1,7 @@
 <?php
 
-abstract class Primage_Proxy_Controller_Abstract {
-	
-	protected $actions = array();
+abstract class Primage_Proxy_Controller_Abstract extends Primage_Proxy_Handler {
 
-	abstract public function dispatch($params = array(), $showImage=false);
+	abstract public function dispatch($params = array(), $showImage = false);
 
-	public function addAction(Primage_Proxy_Action_Abstract $action) {
-		$this->actions[] = $action;
-	}
-
-	protected function makeActionsOnImage(Primage $image) {
-		foreach($this->actions as $action) {
-			$action->make($image);
-		}
-	}
 }
