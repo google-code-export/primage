@@ -6,18 +6,29 @@ class Primage_Proxy_Storage {
 	protected $dir;
 	protected $imageQuality;
 	protected $imageType;
+	
+	/**
+	 * @var Primage_Proxy_Handler
+	 */
+	protected $storeHandler;
 
-	public function __construct($dir, $imageType = null, $imageQuality = 80) {
+	public function __construct($dir, $imageType = null, $imageQuality = 80, Primage_Proxy_Handler $storeHandler = null) {
 		if(!is_dir($dir)) {
-			throw new Exception('Directory "'.$dir.'" not found');
+			throw new Exception('Directory "' . $dir . '" not found');
 		}
 		$this->dir = realpath($dir);
 		$this->imageType = $imageType;
 		$this->imageQuality = $imageQuality;
+		$this->storeHandler = $storeHandler;
 	}
 
 	public function storeImage(Primage $image, $uid) {
 		$uid = $this->clearUid($uid);
+		
+		if($this->storeHandler) {
+			$this->storeHandler->makeActionsOnImage($image);
+		}
+		
 		$this->saveImageToStorage($image, $uid);
 	}
 
