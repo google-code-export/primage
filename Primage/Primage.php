@@ -43,22 +43,20 @@ class Primage {
 		return $type;
 	}
 
-	public function resize($maxWidth = 0, $maxHeight = 0, $holdRatio = true) {
-		if($holdRatio) {
-			$srcRatio = $this->width / $this->height;
-			$dstRatio = $maxHeight ? $maxWidth / $maxHeight : 0;
-			if($dstRatio > $srcRatio || !$maxHeight) {
-				$dstWidth = $maxWidth;
-				$dstHeight = round($maxWidth / $srcRatio);
-			}
-			else {
-				$dstWidth = round($maxHeight * $srcRatio);
-				$dstHeight = $maxHeight;
-			}
+	public function resize($maxWidth = 0, $maxHeight = 0, $onlyBigger = true) {
+		if($onlyBigger && (!$maxWidth || $this->width < $maxWidth) && (!$maxHeight || $this->height < $maxHeight)) {
+			return $this;
+		}
+		
+		$ratio = $this->height / $this->width;
+		
+		if(!$maxWidth || ($maxHeight && ($maxHeight * $ratio) < $maxWidth)) {
+			$dstHeight = $maxHeight;
+			$dstWidth = round($maxHeight / $ratio);
 		}
 		else {
-			$dstHeight = $maxHeight;
 			$dstWidth = $maxWidth;
+			$dstHeight = round($maxWidth * $ratio);
 		}
 		
 		$resizedImage = imagecreatetruecolor($dstWidth, $dstHeight);
