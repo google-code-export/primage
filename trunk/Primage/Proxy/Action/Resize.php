@@ -4,15 +4,15 @@ class Primage_Proxy_Action_Resize extends Primage_Proxy_Action_Abstract {
 	
 	protected $width;
 	protected $height;
-	protected $holdRatio;
+	protected $onlyBigger;
 
-	public function __construct($width = null, $height = null, $holdRatio = true) {
+	public function __construct($width = null, $height = null, $onlyBigger = true) {
 		$this->width = $width;
 		$this->height = $height;
-		$this->holdRatio = $holdRatio;
+		$this->onlyBigger = $onlyBigger;
 	}
 
 	public function make(Primage $image) {
-		$image->resize($this->width, $this->height, $this->holdRatio);
+		$image->resize($this->width, $this->height, $this->onlyBigger);
 	}
 }
