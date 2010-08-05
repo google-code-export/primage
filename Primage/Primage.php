@@ -5,7 +5,7 @@ class Primage {
 	protected $image;
 	protected $wdith;
 	protected $height;
-	protected static $supportedTypes = array('jpeg' => IMG_JPG, 'png' => IMG_PNG, 'gif' => IMG_GIF);
+	protected static $supportedTypesCodes = array('jpeg' => IMG_JPG, 'png' => IMG_PNG, 'gif' => IMG_GIF);
 
 	public function __construct($image) {
 		$this->initImage($image);
@@ -20,11 +20,29 @@ class Primage {
 		$this->height = imagesy($image);
 	}
 
+	public static function getTypeName($type, $throwException = false) {
+		if($type == 'jpg') {
+			$type = 'jpeg';
+		}
+		if(isset(self::$supportedTypesCodes[$type])) {
+			return $type;
+		}
+		elseif($throwException) {
+			throw new Exception('Unkown or unsupported type "' . $type . '"');
+		}
+	}
+
 	public static function buildFromFile($filepath) {
-		$type = self::getImageTypeByFilepath($filepath);
-		$image = call_user_func('imagecreatefrom' . $type, $filepath);
+		$type = self::getImageTypeByFilename($filepath);
+		if(!$type) {
+			$type = self::getImageTypeByFilepath($filepath);
+		}
+		$image = null;
+		if($type) {
+			$image = call_user_func('imagecreatefrom' . $type, $filepath);
+		}
 		
-		if(!$image) {
+		if(!$type || !$image) {
 			throw new Exception('Unkown format of image "' . $filepath . '"');
 		}
 		
@@ -32,15 +50,16 @@ class Primage {
 		return new $class($image);
 	}
 
-	public static function getImageTypeByFilepath($filepath) {
-		$type = pathinfo($filepath, PATHINFO_EXTENSION);
-		if($type == 'jpg') {
-			$type = 'jpeg';
+	public static function getImageTypeByFilename($filename) {
+		return self::getTypeName(pathinfo($filename, PATHINFO_EXTENSION));
+	}
+
+	public function getImageTypeByFilepath($filepath) {
+		$info = getimagesize($filepath);
+		if($info) {
+			list($width, $height, $typeCode) = $info;
+			return array_search($typeCode, self::$supportedTypesCodes);
 		}
-		if(!isset(self::$supportedTypes[$type])) {
-			throw new Exception('Unkown image type "' . $type . '"');
-		}
-		return $type;
 	}
 
 	public function resize($maxWidth = 0, $maxHeight = 0, $onlyBigger = true) {
@@ -121,7 +140,7 @@ class Primage {
 	}
 
 	public function saveToFile($filepath, $quality = 100, $pngFilters = PNG_NO_FILTER) {
-		$type = self::getImageTypeByFilepath($filepath);
+		$type = self::getImageTypeByFilename($filepath);
 		
 		$ok = call_user_func_array('image' . $type, array($this->image, $filepath, $quality, $pngFilters));
 		if(!$ok) {
@@ -131,13 +150,8 @@ class Primage {
 	}
 
 	public function sendToStdout($type = 'jpeg', $quality = 100, $pngFilters = PNG_NO_FILTER) {
-		if($type == 'jpg') {
-			$type = 'jpeg';
-		}
-		if(!isset(self::$supportedTypes[$type])) {
-			throw new Exception('Unkown or unsupported type "' . $type . '"');
-		}
-		header('Content-type: ' . image_type_to_mime_type(self::$supportedTypes[$type]));
+		$type = $this->getTypeName($type, true);
+		header('Content-type: ' . image_type_to_mime_type(self::$supportedTypesCodes[$type]));
 		
 		$ok = call_user_func_array('image' . $type, array($this->image, null, $quality, $pngFilters));
 		if(!$ok) {
