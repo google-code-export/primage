@@ -82,7 +82,13 @@ $controller = $router->getController($_SERVER['REQUEST_URI'], &$params);
 
 if($controller) {
 	$sendResultToStdout = false;
-	$controller->dispatch($params, $sendResultToStdout);
+	try {
+		$controller->dispatch($params, $sendResultToStdout);
+	}
+	catch(Primage_Proxy_Storage_SourceNotFound $e) {
+		header("HTTP/1.0 404 Not Found");
+		exit(0);
+	}
 	
 	if(!$sendResultToStdout) {
 		header('Location: ' . $_SERVER['REQUEST_URI']);

@@ -55,7 +55,7 @@ class Primage_Proxy_Storage {
 	 */
 	public function getImage($id) {
 		$filepath = $this->getImageFilepath($id);
-		if(!$this->isImage($filepath)) {
+		if(!$this->isImage($id)) {
 			throw new Primage_Proxy_Storage_SourceNotFound($filepath);
 		}
 		return Primage::buildFromFile($filepath);
