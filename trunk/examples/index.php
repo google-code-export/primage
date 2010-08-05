@@ -1,7 +1,7 @@
 <?php
 
 $sizes = array('big', 'medium', 'small');
-$types['avatars'] = 'gif';
+$types['avatars'] = 'jpg';
 $types['clipart'] = 'jpg';
 $images['avatars'] = array('sharapova', 'safin', 'federer');
 $images['clipart'] = array('bird', 'girl');

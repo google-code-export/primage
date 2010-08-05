@@ -1,6 +1,6 @@
 <?php
 
-class Primage_Proxy_Controller_ById extends Primage_Proxy_Controller_Abstract {
+class Primage_Proxy_Controller_CopyById extends Primage_Proxy_Controller_Abstract {
 	
 	protected $srcStorage;
 	protected $dstStorage;
