@@ -18,9 +18,6 @@ class Primage_Proxy_Controller_CopyById extends Primage_Proxy_Controller_Abstrac
 		if(empty($params['id'])) {
 			throw new Exception('Parameter "id" is required');
 		}
-		if(!$this->srcStorage->isImage($params['id'])) {
-			throw new Exception('File not found');
-		}
 		$image = $this->srcStorage->getImage($params['id']);
 		$this->makeActionsOnImage($image);
 		$this->dstStorage->storeImage($image, basename($_SERVER['REQUEST_URI']));
