@@ -8,29 +8,49 @@ class Primage_Proxy_Router {
 	protected $uriRegexp;
 	protected $uriVars = array();
 	protected $uriVarsTagged = array();
+	protected $fullMatch;
 	
 	const URI_TEMPLATE_VAR_LEFT_TAG = '{';
 	const URI_TEMPLATE_VAR_RIGHT_TAG = '}';
 
+	public function __construct($fullMatch = true) {
+		$this->fullMatch = $fullMatch;
+	}
+
 	protected function initUriTemplate($uriTemplate) {
-		$uriTemplate = $this->getRealUri($uriTemplate);
+		$uriTemplate = self::getRealUri($uriTemplate);
 		$this->uriTemplates[] = $uriTemplate;
 		if(preg_match_all('/' . preg_quote(self::URI_TEMPLATE_VAR_LEFT_TAG) . '(.*?)' . preg_quote(self::URI_TEMPLATE_VAR_RIGHT_TAG) . '/', $uriTemplate, $matches)) {
 			$this->uriVars[] = $matches[1];
 			$this->uriVarsTagged[] = $matches[0];
-			$this->uriRegexp[] = '!' . str_replace($matches[0], '(.+?)', $uriTemplate) . '$!u';
+			$this->uriRegexp[] = '!' . ($this->fullMatch ? '^' : '') . str_replace($matches[0], '(.+?)', $uriTemplate) . '$!u';
 		}
 		else {
 			throw new Exception('Router URI template must have some vars');
 		}
 	}
 
-	protected function getRealUri($uri) {
-		return str_replace('\\', '/', trim($uri, '/\\'));
+	public static function getRealUri($uri) {
+		return str_replace('\\', '/', trim(preg_replace('/\?.*$/', '', $uri), '/\\'));
 	}
 
+	public static function getUriDir($uri) {
+		return $_SERVER['DOCUMENT_ROOT'] . DIRECTORY_SEPARATOR . dirname(self::getRealUri($uri));
+	}
+	
+	public static function getDirUri($dir) {
+		$dir = realpath($dir);
+		$docRootDir = realpath($_SERVER['DOCUMENT_ROOT']);
+		if(!preg_match('!^'.preg_quote($docRootDir).'!', $dir)) {
+			throw new Exception('Directory "'.$dir.'" is not part of DOCUMENT_ROOT');
+		}
+		return self::getRealUri(preg_replace('!^'.preg_quote($docRootDir).'!', '', $dir));
+	}
+	
+	
+
 	public function getController($uri, &$params) {
-		$uri = $this->getRealUri($uri);
+		$uri = self::getRealUri($uri);
 		$uriIndex = $this->getMatchedUriIndex($uri);
 		if($uriIndex !== false) {
 			$params = $this->getVarsFromUri($uri, $uriIndex);

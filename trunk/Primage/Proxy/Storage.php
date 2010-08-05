@@ -16,68 +16,83 @@ class Primage_Proxy_Storage {
 		if(!is_dir($dir)) {
 			throw new Exception('Directory "' . $dir . '" not found');
 		}
-		if(!is_dir($tmpDir)) {
-			throw new Exception('Directory "' . $tmpDir . '" not found');
-		}
 		
 		$this->dir = realpath($dir);
 		$this->imageType = $imageType;
 		$this->imageQuality = $imageQuality;
 		$this->storeHandler = $storeHandler;
 	}
+	
+	public function __get($var) {
+		return $this->$var;
+	}
 
-	public function storeImage(Primage $image, $uid) {
-		$uid = $this->clearUid($uid);
-		
+	public function storeImage(Primage $image, $id = null) {
+		if(!$id) {
+			$id = $this->getRandomId();
+		}
+		$id = $this->clearId($id);
 		if($this->storeHandler) {
 			$this->storeHandler->makeActionsOnImage($image);
 		}
-		
-		$this->saveImageToStorage($image, $uid);
+		$this->saveImageToStorage($image, $id);
+		return $id;
 	}
 
-	public function isImage($uid) {
-		return is_file($this->getImageFilepath($uid));
+	protected function saveImageToStorage(Primage $image, $id) {
+		$filepath = $this->dir . DIRECTORY_SEPARATOR . $id . '.' . $this->imageType;
+		$image->saveToFile($filepath, $this->imageQuality);
 	}
 
-	public function getImage($uid) {
-		return Primage::buildFromFile($this->getImageFilepath($uid));
+	public function isImage($id) {
+		return is_file($this->getImageFilepath($id));
 	}
 
-	protected function clearUid($uid) {
-		return preg_replace(array('/\..{3,4}$/', '![/\\\\]!'), array('', ''), $uid);
+	
+	/**
+	 * @param string $id
+	 * @return Primage
+	 */
+	public function getImage($id) {
+		return Primage::buildFromFile($this->getImageFilepath($id));
 	}
 
-	// TODO: clear by date of file last access limit
+	protected function clearId($id) {
+		return preg_replace(array('/\..{3,4}$/', '![/\\\\]!'), array('', ''), $id);
+	}
+
 	public function clearStorage($regexpFilter = null) {
 		foreach(new DirectoryIterator($this->dir) as $fsObject) {
 			if($fsObject->isFile()) {
 				if(!$regexpFilter || preg_match($regexpFilter, $fsObject->getPathname())) {
-					echo $fsObject->getPathname() . '<BR>';
-					//					unlink($fsObject->getPathname());
+					unlink($fsObject->getPathname());
 				}
 			}
 		}
 	}
 
-	protected function saveImageToStorage(Primage $image, $uid) {
-		$filepath = $this->dir . DIRECTORY_SEPARATOR . $uid . '.' . $this->imageType;
-		$image->saveToFile($filepath, $this->imageQuality);
-	}
-
-	protected function getImageFilepath($uid) {
-		return $this->dir . DIRECTORY_SEPARATOR . $uid . '.' . $this->imageType;
+	protected function getImageFilepath($id) {
+		return $this->dir . DIRECTORY_SEPARATOR . $id . '.' . $this->imageType;
 	}
 
 	/***************************************************************
   STORE FROM FILE/URL
 	 **************************************************************/
 	
-	public function storeImageFromFile($filepath, $deleteOriginal = false) {
-		return $this->loadImageFromFile($filepath);
+	public function loadImageFromFile($filepath) {
+		if(!is_file($filepath)) {
+			throw new Primage_Proxy_Storage_SourceNotFound($filepath);
+		}
+		try {
+			$image = Primage::buildFromFile($filepath);
+		}
+		catch(Exception $e) {
+			throw new Primage_Proxy_Storage_WrongImageFormat('Opening file "' . $filepath . '" failed. Original exception: ' . print_r($e, 1));
+		}
+		return $image;
 	}
 
-	public function storeImageFromUpload($_FILE) {
+	public function loadImageFromUpload($_FILE) {
 		foreach(array('name', 'tmp_name', 'size') as $param) {
 			if(empty($_FILE[$param])) {
 				throw new Exception('Wrong $_FILE format');
@@ -97,7 +112,7 @@ class Primage_Proxy_Storage {
 		return $image;
 	}
 
-	public function storeImageFromUrl($url) {
+	public function loadImageFromUrl($url) {
 		$tmpFilepath = $this->getRandomTmpFilepath();
 		$this->downloadFileFromUrl($url, $tmpFilepath);
 		
@@ -105,24 +120,16 @@ class Primage_Proxy_Storage {
 			$image = $this->loadImageFromFile($tmpFilepath);
 		}
 		catch(Exception $e) {
-			unlink($tmpFilepath);
+			if(is_file($tmpFilepath)) {
+				unlink($tmpFilepath);
+			}
 			throw new $e();
 		}
-		unlink($tmpFilepath);
+		if(is_file($tmpFilepath)) {
+			unlink($tmpFilepath);
+		}
 		
 		return $image;
-	}
-
-	protected function loadImageFromFile($filepath) {
-		if(!is_file($filepath)) {
-			throw new Primage_Proxy_Storage_SourceNotFound($filepath);
-		}
-		try {
-			Primage::buildFromFile($filepath);
-		}
-		catch(Exception $e) {
-			throw new Primage_Proxy_Storage_WrongImageFormat('Opening file "' . $filepath . '" failed. Original exception: ' . print_r($e, 1));
-		}
 	}
 
 	protected function downloadFileFromUrl($url, $dstFilepath) {
@@ -131,6 +138,9 @@ class Primage_Proxy_Storage {
 			throw new Primage_Proxy_Storage_SourceNotFound($url);
 		}
 		$fw = fopen($dstFilepath, 'w');
+		if($fw === false) {
+			throw new Exception('Writing to file "' . $dstFilepath . '" failed');
+		}
 		
 		$timeLimit = 1000;
 		set_time_limit($timeLimit);
@@ -138,10 +148,11 @@ class Primage_Proxy_Storage {
 		
 		while(!feof($fr)) {
 			$bufferString = fread($fr, 10000);
-			fopen($fw, $bufferString);
-			if($deadline - time() > 10) {
+			fwrite($fw, $bufferString);
+			if($deadline - time() < 10) {
 				fclose($fw);
 				fclose($fr);
+				unlink($dstFilepath);
 				throw new Primage_Proxy_Storage_SourceNotFound($url);
 			}
 		}
@@ -150,7 +161,11 @@ class Primage_Proxy_Storage {
 	}
 
 	protected function getRandomTmpFilepath() {
-		return $this->dir . '/_tmp_' . md5(mt_rand() . mt_rand() . mt_rand() . mt_rand());
+		return $this->dir . '/_tmp_' . $this->getRandomId();
+	}
+
+	protected function getRandomId() {
+		return md5(mt_rand() . mt_rand() . mt_rand() . mt_rand());
 	}
 }
 
