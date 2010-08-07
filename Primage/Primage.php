@@ -69,7 +69,7 @@ class Primage {
 		
 		$ratio = $this->height / $this->width;
 		
-		if(!$maxWidth || ($maxHeight && ($maxHeight * $ratio) < $maxWidth)) {
+		if(!$maxWidth || ($maxHeight && ($maxHeight / $ratio) < $maxWidth)) {
 			$dstHeight = $maxHeight;
 			$dstWidth = round($maxHeight / $ratio);
 		}
