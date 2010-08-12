@@ -49,16 +49,15 @@ class Primage_Proxy_Controller_CopyWithResize extends Primage_Proxy_Controller_A
 			throw new Primage_Proxy_Controller_RequestException('Argument "height" cannot be > ' . $this->maxHeight);
 		}
 		if($this->step) {
-			if($height && $height % $step) {
+			if($height && $height % $this->step) {
 				throw new Primage_Proxy_Controller_RequestException('Argument "height" is not multiple of ' . $this->step);
 			}
-			if($width && $width % $step) {
+			if($width && $width % $this->step) {
 				throw new Primage_Proxy_Controller_RequestException('Argument "width" is not multiple of ' . $this->step);
 			}
 		}
 		
 		$image->resize($width, $height);
-		
 		$this->dstStorage->storeImage($image, basename($_SERVER['REQUEST_URI']));
 	}
 }
