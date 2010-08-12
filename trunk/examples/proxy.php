@@ -28,7 +28,7 @@ spl_autoload_register('autoloadByDir');
 $router = new Primage_Proxy_Router(false);
 
 /**************************************************************
-	AVATARS IMAGES
+	AVATARS RESIZED IMAGES
  **************************************************************/
 
 $avatarsBaseUri = 'avatars/{id}_';
@@ -50,7 +50,7 @@ $avatarsSmall->addAction(new Primage_Proxy_Action_Resize(25, 25));
 $router->addController($avatarsBaseUri . 'small.' . $avatarsDstType, $avatarsSmall);
 
 /**************************************************************
-	CLIPART IMAGES
+	CLIPART RESIZED AND WATERMARKED IMAGES
  **************************************************************/
 
 $clipartBaseUri = 'clipart/{id}_';
@@ -58,21 +58,33 @@ $clipartSrcType = 'jpg';
 $clipartDstType = 'jpg';
 $clipartStorage = new Primage_Proxy_Storage(ORIGINAL_IMAGES_DIR . '/clipart', $clipartSrcType, 90);
 $clipartProxyStorage = new Primage_Proxy_Storage(PUBLIC_IMAGES_DIR . '/clipart', $clipartDstType, 80);
-$watermarkAction = new PRimage_Proxy_Action_Watermark(ORIGINAL_IMAGES_DIR . '/watermark.png', -10, -10, 50);
+$watermarkAction = new Primage_Proxy_Action_Watermark(ORIGINAL_IMAGES_DIR . '/watermark.png', -10, -10, 50);
 
 $clipartBig = new Primage_Proxy_Controller_CopyById($clipartStorage, $clipartProxyStorage);
-$clipartBig->addAction(new Primage_Proxy_Action_Resize(400, 400));
+$clipartBig->addAction(new Primage_Proxy_Action_Resize(500, 500));
 $clipartBig->addAction($watermarkAction);
 $router->addController($clipartBaseUri . 'big.' . $clipartDstType, $clipartBig);
 
 $clipartMedium = new Primage_Proxy_Controller_CopyById($clipartStorage, $clipartProxyStorage);
-$clipartMedium->addAction(new Primage_Proxy_Action_Resize(200, 200));
 $clipartMedium->addAction($watermarkAction);
-$router->addController($clipartBaseUri . 'medium.' . $clipartDstType, $clipartMedium);
+$clipartMedium->addAction(new Primage_Proxy_Action_Resize(300, 300));
 
+$router->addController($clipartBaseUri . 'medium.' . $clipartDstType, $clipartMedium);
 $clipartThumb = new Primage_Proxy_Controller_CopyById($clipartStorage, $clipartProxyStorage);
 $clipartThumb->addAction(new Primage_Proxy_Action_Resize(100, 100));
 $router->addController($clipartBaseUri . 'small.' . $clipartDstType, $clipartThumb);
+
+/**************************************************************
+	CLIPART DYNAMICALY RESIZED AND WATERMARKED IMAGES
+ **************************************************************/
+
+$maxWidth = 2000;
+$maxHeight = 2000;
+$step = 50;
+
+$clipartDynamic = new Primage_Proxy_Controller_CopyWithResize($clipartStorage, $clipartProxyStorage, $maxWidth, $maxHeight, $step);
+$clipartDynamic->addAction($watermarkAction);
+$router->addController('clipart/{id}_{width}x{height}.' . $clipartDstType, $clipartDynamic);
 
 /**************************************************************
 	PROCESS REQUESTED IMAGE
@@ -86,16 +98,19 @@ if($controller) {
 		$controller->dispatch($params, $sendResultToStdout);
 	}
 	catch(Primage_Proxy_Storage_SourceNotFound $e) {
-		header("HTTP/1.0 404 Not Found");
+		header('HTTP/1.0 404 Not Found');
 		exit(0);
 	}
-	
+	catch(Primage_Proxy_Controller_RequestException $e) {
+		header('HTTP/1.0 404 Not Found');
+		exit(0);
+	}
 	if(!$sendResultToStdout) {
 		header('Location: ' . $_SERVER['REQUEST_URI']);
 		exit(0);
 	}
 }
 else {
-	header("HTTP/1.0 404 Not Found");
+	header('HTTP/1.0 404 Not Found');
 	exit(0);
 }
