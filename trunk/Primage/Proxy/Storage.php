@@ -22,7 +22,7 @@ class Primage_Proxy_Storage {
 		$this->imageQuality = $imageQuality;
 		$this->storeHandler = $storeHandler;
 	}
-	
+
 	public function __get($var) {
 		return $this->$var;
 	}
@@ -31,7 +31,12 @@ class Primage_Proxy_Storage {
 		if(!$id) {
 			$id = $this->getRandomId();
 		}
-		$id = $this->clearId($id);
+		else {
+			$id = $this->clearId($id);
+			if($this->isImage($id)) {
+				throw new Exception('Image with id "' . $id . '" already exists');
+			}
+		}
 		if($this->storeHandler) {
 			$this->storeHandler->makeActionsOnImage($image);
 		}
@@ -48,7 +53,6 @@ class Primage_Proxy_Storage {
 		return is_file($this->getImageFilepath($id));
 	}
 
-	
 	/**
 	 * @param string $id
 	 * @return Primage

@@ -62,7 +62,7 @@ class Primage {
 		}
 	}
 
-	public function resize($maxWidth = 0, $maxHeight = 0, $onlyBigger = true) {
+	public function resize($maxWidth = null, $maxHeight = null, $onlyBigger = true) {
 		if($onlyBigger && (!$maxWidth || $this->width < $maxWidth) && (!$maxHeight || $this->height < $maxHeight)) {
 			return $this;
 		}
