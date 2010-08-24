@@ -6,13 +6,14 @@ class Primage_Proxy_Storage {
 	protected $dir;
 	protected $imageQuality;
 	protected $imageType;
+	protected $storeSubDirs;
 	
 	/**
 	 * @var Primage_Proxy_Handler
 	 */
 	protected $storeHandler;
 
-	public function __construct($dir, $imageType = null, $imageQuality = 80, Primage_Proxy_Handler $storeHandler = null) {
+	public function __construct($dir, $imageType = null, $imageQuality = 80, Primage_Proxy_Handler $storeHandler = null, $storeSubDirs = 0) {
 		if(!is_dir($dir)) {
 			throw new Exception('Directory "' . $dir . '" not found');
 		}
@@ -21,6 +22,7 @@ class Primage_Proxy_Storage {
 		$this->imageType = $imageType;
 		$this->imageQuality = $imageQuality;
 		$this->storeHandler = $storeHandler;
+		$this->storeSubDirs = $storeSubDirs;
 	}
 
 	public function __get($var) {
@@ -31,12 +33,11 @@ class Primage_Proxy_Storage {
 		if(!$id) {
 			$id = $this->getRandomId();
 		}
-		else {
-			$id = $this->clearId($id);
-			if($this->isImage($id)) {
-				throw new Exception('Image with id "' . $id . '" already exists');
-			}
+		$id = $this->prepareId($id);
+		if($this->isImage($id)) {
+			throw new Exception('Image with id "' . $id . '" already exists');
 		}
+		
 		if($this->storeHandler) {
 			$this->storeHandler->makeActionsOnImage($image);
 		}
@@ -46,6 +47,10 @@ class Primage_Proxy_Storage {
 
 	protected function saveImageToStorage(Primage $image, $id) {
 		$filepath = $this->dir . DIRECTORY_SEPARATOR . $id . '.' . $this->imageType;
+		$dir = dirname($filepath);
+		if(!is_dir($dir)) {
+			mkdir($dir, null, true);
+		}
 		$image->saveToFile($filepath, $this->imageQuality);
 	}
 
@@ -65,8 +70,15 @@ class Primage_Proxy_Storage {
 		return Primage::buildFromFile($filepath);
 	}
 
-	protected function clearId($id) {
-		return preg_replace(array('/\..{3,4}$/', '![/\\\\]!'), array('', ''), $id);
+	protected function prepareId($id) {
+		$id = preg_replace('/\..{3,4}$/', '', str_replace(array('\\', '..'), array('/', ''), $id));
+		
+		if($this->storeSubDirs) {
+			for($i = $this->storeSubDirs; $i; $i --) {
+				$id = $this->getRandomId(2) . '/' . $id;
+			}
+		}
+		return $id;
 	}
 
 	public function clearStorage($regexpFilter = null) {
@@ -172,8 +184,8 @@ class Primage_Proxy_Storage {
 		return $this->dir . '/_tmp_' . $this->getRandomId();
 	}
 
-	protected function getRandomId() {
-		return md5(mt_rand() . mt_rand() . mt_rand() . mt_rand());
+	protected function getRandomId($length = 25) {
+		return substr(md5(mt_rand() . mt_rand() . mt_rand() . mt_rand()), 0, $length);
 	}
 }
 
