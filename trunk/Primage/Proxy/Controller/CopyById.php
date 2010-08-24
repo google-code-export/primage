@@ -29,6 +29,9 @@ class Primage_Proxy_Controller_CopyById extends Primage_Proxy_Controller_Abstrac
 	 * @param array $params
 	 */
 	protected function postDispatch(Primage $image, array $params) {
-		$this->dstStorage->storeImage($image, basename($_SERVER['REQUEST_URI']));
+		if(!preg_match('!('.preg_quote($params['id'], '!').'.*)$!', $_SERVER['REQUEST_URI'], $m)) {
+			throw new Primage_Proxy_Storage_SourceNotFound();
+		}
+		$this->dstStorage->storeImage($image, $m[1]);
 	}
 }
