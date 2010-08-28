@@ -1,6 +1,11 @@
 <?php
 
-// TODO: refactoring to interface is required
+/**
+ *
+ * @see http://code.google.com/p/dabase
+ * @author Barbushin Sergey http://www.linkedin.com/in/barbushin
+ *
+ */
 class Primage_Proxy_Storage {
 	
 	protected $dir;

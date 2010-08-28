@@ -1,5 +1,11 @@
 <?php
 
+/**
+ *
+ * @see http://code.google.com/p/dabase
+ * @author Barbushin Sergey http://www.linkedin.com/in/barbushin
+ *
+ */
 class Primage_Proxy_Action_Resize extends Primage_Proxy_Action_Abstract {
 	
 	protected $width;
