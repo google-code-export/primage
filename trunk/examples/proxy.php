@@ -96,21 +96,14 @@ if($controller) {
 	$sendResultToStdout = false;
 	try {
 		$controller->dispatch($params, $sendResultToStdout);
+		if(!$sendResultToStdout) {
+			header('Location: ' . $_SERVER['REQUEST_URI']);
+		}
+		exit;
 	}
 	catch(Primage_Proxy_Storage_SourceNotFound $e) {
-		header('HTTP/1.0 404 Not Found');
-		exit(0);
 	}
 	catch(Primage_Proxy_Controller_RequestException $e) {
-		header('HTTP/1.0 404 Not Found');
-		exit(0);
-	}
-	if(!$sendResultToStdout) {
-		header('Location: ' . $_SERVER['REQUEST_URI']);
-		exit(0);
 	}
 }
-else {
-	header('HTTP/1.0 404 Not Found');
-	exit(0);
-}
+header('HTTP/1.0 404 Not Found');
