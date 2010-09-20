@@ -60,7 +60,7 @@ class Primage {
 		return self::getTypeName(pathinfo($filename, PATHINFO_EXTENSION));
 	}
 
-	public function getImageTypeByFilepath($filepath) {
+	public static function getImageTypeByFilepath($filepath) {
 		$info = getimagesize($filepath);
 		if($info) {
 			list($width, $height, $typeCode) = $info;
