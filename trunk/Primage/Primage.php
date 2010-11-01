@@ -148,7 +148,7 @@ class Primage {
 	public function saveToFile($filepath, $quality = 100, $pngFilters = PNG_NO_FILTER) {
 		$type = self::getImageTypeByFilename($filepath);
 		
-		$ok = call_user_func_array('image' . $type, array($this->image, $filepath, $quality, $pngFilters));
+		$ok = call_user_func_array('image' . $type, array($this->image, $filepath, $type == 'png' ? round($quality / 10) : $quality, $pngFilters));
 		if(!$ok) {
 			throw new Exception('Saving image to file "' . $filepath . '" failed');
 		}
@@ -159,7 +159,7 @@ class Primage {
 		$type = $this->getTypeName($type, true);
 		header('Content-type: ' . image_type_to_mime_type(self::$supportedTypesCodes[$type]));
 		
-		$ok = call_user_func_array('image' . $type, array($this->image, null, $quality, $pngFilters));
+		$ok = call_user_func_array('image' . $type, array($this->image, null, $type == 'png' ? round($quality / 10) : $quality, $pngFilters));
 		if(!$ok) {
 			throw new Exception('Sending image to STDOUT failed');
 		}
