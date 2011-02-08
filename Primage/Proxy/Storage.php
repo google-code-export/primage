@@ -40,7 +40,7 @@ class Primage_Proxy_Storage {
 		}
 		$id = $this->prepareId($id);
 		if($this->isImage($id)) {
-			throw new Exception('Image with id "' . $id . '" already exists');
+			throw new Primage_Proxy_Storage_SourceIdDuplicate('Image with id "' . $id . '" already exists');
 		}
 		
 		if($this->storeHandler) {
@@ -198,6 +198,9 @@ class Primage_Proxy_Storage_Exception extends Exception {
 }
 
 class Primage_Proxy_Storage_SourceNotFound extends Primage_Proxy_Storage_Exception {
+}
+
+class Primage_Proxy_Storage_SourceIdDuplicate extends Primage_Proxy_Storage_Exception {
 }
 
 class Primage_Proxy_Storage_WrongImageFormat extends Primage_Proxy_Storage_Exception {
