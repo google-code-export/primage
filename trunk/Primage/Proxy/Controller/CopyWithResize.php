@@ -64,6 +64,6 @@ class Primage_Proxy_Controller_CopyWithResize extends Primage_Proxy_Controller_A
 		}
 		
 		$image->resize($width, $height);
-		$this->dstStorage->storeImage($image, basename($_SERVER['REQUEST_URI']));
+		$this->dstStorage->storeImage($image, basename(urldecode($_SERVER['REQUEST_URI'])));
 	}
 }
