@@ -1,5 +1,10 @@
 <?php
 
+$apacheModules = apache_get_modules();
+if(!$apacheModules || !in_array('mod_rewrite', $apacheModules)) {
+	throw new Exception('Apache module "mod_rewrite" is not installed');
+}
+
 $sizes = array('big', 'medium', 'small');
 $types['avatars'] = 'jpg';
 $types['clipart'] = 'jpg';
