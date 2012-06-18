@@ -7,7 +7,7 @@
  *
  */
 class Primage {
-	
+
 	protected $image;
 	protected $wdith;
 	protected $height;
@@ -47,11 +47,11 @@ class Primage {
 		if($type) {
 			$image = call_user_func('imagecreatefrom' . $type, $filepath);
 		}
-		
+
 		if(!$type || !$image) {
 			throw new Exception('Unkown format of image "' . $filepath . '"');
 		}
-		
+
 		$class = __CLASS__;
 		return new $class($image);
 	}
@@ -72,9 +72,9 @@ class Primage {
 		if($onlyBigger && (!$maxWidth || $this->width < $maxWidth) && (!$maxHeight || $this->height < $maxHeight)) {
 			return $this;
 		}
-		
+
 		$ratio = $this->height / $this->width;
-		
+
 		if(!$maxWidth || ($maxHeight && ($maxHeight / $ratio) < $maxWidth)) {
 			$dstHeight = $maxHeight;
 			$dstWidth = round($maxHeight / $ratio);
@@ -83,16 +83,16 @@ class Primage {
 			$dstWidth = $maxWidth;
 			$dstHeight = round($maxWidth * $ratio);
 		}
-		
+
 		$resizedImage = imagecreatetruecolor($dstWidth, $dstHeight);
 		imagealphablending($resizedImage, false);
 		imagefill($resizedImage, 0, 0, imagecolorallocatealpha($resizedImage, 0, 0, 0, 127));
 		imagesavealpha($resizedImage, true);
-		
+
 		if(!imagecopyresampled($resizedImage, $this->image, 0, 0, 0, 0, $dstWidth, $dstHeight, $this->width, $this->height)) {
 			throw new Exception('Resizing failed');
 		}
-		
+
 		$this->updateImage($resizedImage);
 		return $this;
 	}
@@ -110,7 +110,7 @@ class Primage {
 		else {
 			$y = $y >= 0 ? $y : ($this->height + $y - $waterImage->height);
 		}
-		
+
 		if($transparencyPercents) {
 			$cut = imagecreatetruecolor($waterImage->width, $waterImage->height);
 			imagecopy($cut, $this->image, 0, 0, $x, $y, $waterImage->width, $waterImage->height);
@@ -121,7 +121,7 @@ class Primage {
 			imagelayereffect($this->image, IMG_EFFECT_ALPHABLEND);
 			imagecopy($this->image, $waterImage->image, $x, $y, 0, 0, $waterImage->width, $waterImage->height);
 		}
-		
+
 		return $this;
 	}
 
@@ -131,7 +131,7 @@ class Primage {
 	 */
 	public function addEffect($effect) {
 		$effects = array('blur' => array(array(1 / 9, 1 / 9, 1 / 9), array(1 / 9, 1 / 9, 1 / 9), array(1 / 9, 1 / 9, 1 / 9)), 'edge' => array(array(0, -1, 0), array(-1, 4, -1), array(0, -1, 0)), 'sharpena' => array(array(0, -1, 0), array(-1, 5, -1), array(0, -1, 0)), 'sharpenb' => array(array(-1, -1, -1), array(-1, 16, -1), array(-1, -1, -1)), 'emboss' => array(array(2, 0, 0), array(0, -1, 0), array(0, 0, -1)), 'light' => array(array(0, 0, 1), array(0, 1, 0), array(1, 0, 0)));
-		
+
 		if(!isset($effects[$effect])) {
 			throw new Exception('Unkown effect "' . $effect . '"');
 		}
@@ -145,11 +145,15 @@ class Primage {
 		return $this;
 	}
 
+	protected function handleImage($type, $filepath = null, $quality = 100, $pngFilters = PNG_NO_FILTER) {
+		if($type == 'png') {
+			$quality = round(9 / 100 * $quality);
+		}
+		return call_user_func_array('image' . $type, array($this->image, $filepath, $quality, $pngFilters));
+	}
+
 	public function saveToFile($filepath, $quality = 100, $pngFilters = PNG_NO_FILTER) {
-		$type = self::getImageTypeByFilename($filepath);
-		
-		$ok = call_user_func_array('image' . $type, array($this->image, $filepath, $type == 'png' ? round($quality / 10) : $quality, $pngFilters));
-		if(!$ok) {
+		if(!$this->handleImage(self::getImageTypeByFilename($filepath), $filepath, $quality, $pngFilters)) {
 			throw new Exception('Saving image to file "' . $filepath . '" failed');
 		}
 		return $this;
@@ -158,9 +162,7 @@ class Primage {
 	public function sendToStdout($type = 'jpeg', $quality = 100, $pngFilters = PNG_NO_FILTER) {
 		$type = $this->getTypeName($type, true);
 		header('Content-type: ' . image_type_to_mime_type(self::$supportedTypesCodes[$type]));
-		
-		$ok = call_user_func_array('image' . $type, array($this->image, null, $type == 'png' ? round($quality / 10) : $quality, $pngFilters));
-		if(!$ok) {
+		if(!$this->handleImage($type, null, $quality, $pngFilters)) {
 			throw new Exception('Sending image to STDOUT failed');
 		}
 		return $this;
@@ -172,7 +174,7 @@ class Primage {
 		imagefill($copyImage, 0, 0, imagecolorallocatealpha($copyImage, 0, 0, 0, 127));
 		imagesavealpha($copyImage, true);
 		imagecopy($copyImage, $this->image, 0, 0, 0, 0, $this->width, $this->height);
-		
+
 		$class = get_class($this);
 		return new $class($copyImage);
 	}

@@ -1,7 +1,10 @@
 Options -Indexes
 
 # CACHE FOR TWO HOURS
+
+<ifModule header.c>
 Header set Cache-Control "max-age=7200, must-revalidate"
+</ifModule>
 
 RewriteEngine on
 RewriteCond %{REQUEST_FILENAME} !-f
